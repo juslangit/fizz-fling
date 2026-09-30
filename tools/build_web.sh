@@ -10,6 +10,7 @@ mkdir -p build/web
 find build/web -type f -delete
 "$GODOT" --headless --path . --import >/dev/null 2>&1 || true
 "$GODOT" --headless --path . --export-release "Web" build/web/index.html >/dev/null 2>&1
+cp tools/web/frame_test.html build/web/frame_test.html
 [ -f build/web/index.html ] || { echo "Export failed"; exit 1; }
 (cd build/web && zip -qr ../fizz-fling-web.zip . -x '.*')
 echo "Zip: build/fizz-fling-web.zip ($(du -h build/fizz-fling-web.zip | cut -f1))"

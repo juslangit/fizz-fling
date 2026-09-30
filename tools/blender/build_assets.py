@@ -125,7 +125,9 @@ def join(name, objs):
     for o in objs:
         o.select_set(True)
     bpy.context.view_layer.objects.active = objs[0]
-    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+    # pivot at the world origin (the ground), not at the first part — the game places
+    # repeated props by their pivot and would otherwise sink them into the grass
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     bpy.ops.object.join()
     o = bpy.context.view_layer.objects.active
     o.name = name
