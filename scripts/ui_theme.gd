@@ -105,6 +105,19 @@ static func label(text: String, size := BODY, col := WHITE, outline := OUTLINE) 
 	return l
 
 
+## Sets `text` and shrinks the font until it fits `max_w` pixels (never below `min_size`).
+## The label is also told to clip, so a long word can never widen its container: one long
+## drink name ("SPARKLING WATER") once pushed the whole title screen past the phone's edge.
+static func fit(l: Label, text: String, max_w: float, max_size: int, min_size := 20) -> void:
+	l.text = text
+	l.clip_text = true
+	l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	var size := max_size
+	while size > min_size and font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > max_w:
+		size -= 2
+	l.add_theme_font_size_override("font_size", size)
+
+
 static func button(text: String, col := YELLOW, size := BUTTON) -> Button:
 	var b := Button.new()
 	b.text = text
