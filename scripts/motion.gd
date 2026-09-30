@@ -17,6 +17,11 @@ const AIM_DRAG_DEG_PER_PX := 0.18
 
 var demo := false                # ?demo in the URL or `-- --demo`: the game plays itself
 var demo_party := false          # ?demo&party: the demo plays a 2-player party instead
+var demo_target := false         # ?demo&target: the demo plays the target mode
+var demo_replay := false         # ?demo&replay: the demo presses REPLAY once on its first result
+var demo_drink := ""              # ?drink=cola: start with that drink (screenshots)
+var auto_nav := false            # ?auto (and every demo): menus click themselves, but shaking and
+                                 # tilting still come from the sensors — tools/checks/motion_web.mjs
 var _js = null                   # window.fizz on the web
 var _fallback_energy := 0.0
 var _recent := 0.0               # smoothed energy rate, for wobble visuals
@@ -33,10 +38,19 @@ func _ready() -> void:
 		var q = JavaScriptBridge.eval("location.search", true)
 		demo = str(q).find("demo") >= 0
 		demo_party = str(q).find("party") >= 0
+		demo_target = str(q).find("target") >= 0
+		auto_nav = str(q).find("auto") >= 0
+		demo_replay = str(q).find("replay") >= 0
+		var m := RegEx.create_from_string("drink=([a-z]+)").search(str(q))
+		if m:
+			demo_drink = m.get_string(1)
 	if "--demo" in OS.get_cmdline_user_args():
 		demo = true
 	if "--party" in OS.get_cmdline_user_args():
 		demo_party = true
+	if "--target" in OS.get_cmdline_user_args():
+		demo_target = true
+	auto_nav = auto_nav or demo
 
 
 # ------------------------------------------------------------------ what the page knows
@@ -75,6 +89,29 @@ func open_own_page() -> void:
 func report_state(name: String) -> void:
 	if _js != null:
 		_js.state = name
+
+
+## Leaves a value on the page (window.fizz.out.<key>) for the web checks to read.
+func report(key: String, value) -> void:
+	if _js != null:
+		JavaScriptBridge.eval("fizz.out[%s] = %s" % [JSON.stringify(key), JSON.stringify(value)], true)
+
+
+## The share card: the game hands the page a JPEG ahead of time, then the SHARE button arms it
+## on press, and the page shares it inside the tap itself (browsers only share from a tap).
+func can_share() -> bool:
+	return _js != null
+
+
+func set_share(jpg: PackedByteArray, text: String) -> void:
+	if _js != null:
+		_js.shareB64 = Marshalls.raw_to_base64(jpg)
+		_js.shareText = text
+
+
+func arm_share() -> void:
+	if _js != null:
+		_js.shareArmed = true
 
 
 func vibrate(ms: int) -> void:

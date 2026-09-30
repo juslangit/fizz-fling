@@ -24,6 +24,10 @@ var camera: Camera3D
 var sun: DirectionalLight3D
 var _clouds: Array[Node3D] = []
 var wind := 0.0
+var target: Node3D              # the bin and its rings, for the target mode
+var _mat_bottle: BaseMaterial3D
+var _mat_liquid: BaseMaterial3D
+var _mat_label: BaseMaterial3D
 var _rng := RandomNumberGenerator.new()
 
 
@@ -273,6 +277,11 @@ func _start_area() -> void:
 	flag = model("flag")
 	flag.visible = false
 	add_child(flag)
+	target = Node3D.new()
+	target.add_child(model("rings"))
+	target.add_child(model("bin"))
+	target.visible = false
+	add_child(target)
 	flag_label = Label3D.new()
 	flag_label.font = font
 	flag_label.font_size = 64
@@ -322,6 +331,29 @@ func _fix_bottle_materials() -> void:
 				m.emission_enabled = true
 				m.emission = Color(0.45, 0.16, 0.0)
 		mi.set_surface_override_material(0, m)
+		match String(mi.name):
+			"Bottle": _mat_bottle = m
+			"Liquid": _mat_liquid = m
+			"Label": _mat_label = m
+
+
+## Dresses the bottle as one of the drinks in scripts/drinks.gd.
+func apply_drink(d: Dictionary) -> void:
+	_mat_liquid.albedo_color = d.liquid
+	_mat_liquid.emission = d.glow
+	_mat_bottle.albedo_color = d.plastic
+	_mat_label.albedo_texture = load(d.label)
+	set_cap_color(d.cap)
+	trail.mesh.material.albedo_color = d.drop2
+
+
+func show_target(x: float) -> void:
+	target.position = Vector3(x, 0, 0)
+	target.visible = true
+
+
+func hide_target() -> void:
+	target.visible = false
 
 
 func set_cap_color(c: Color) -> void:

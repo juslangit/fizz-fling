@@ -168,6 +168,10 @@ def materials():
     M["flower_y"] = mat("FlowerYellow", (1.0, 0.85, 0.2))
     M["flower_p"] = mat("FlowerPink", (1.0, 0.45, 0.7))
     M["cloth"] = mat("Cloth", (0.95, 0.3, 0.3), rough=0.9)
+    M["bin"] = mat("BinGreen", (0.18, 0.55, 0.3), rough=0.6)
+    M["bin_in"] = mat("BinInside", (0.08, 0.14, 0.1), rough=1.0)
+    M["ring_red"] = mat("RingRed", (0.9, 0.16, 0.18), rough=1.0)
+    M["ring_white"] = mat("RingWhite", (0.97, 0.96, 0.92), rough=1.0)
 
 
 # ---------------------------------------------------------------- the bottle
@@ -307,6 +311,47 @@ def build_rock():
     return r
 
 
+# ---------------------------------------------------------------- target mode
+def build_bin():
+    """A park rubbish bin for the target mode, open at the top so a cap can drop in, with a
+    tall flag beside it to spot it from 100 m. Sizes match Flight.BIN_R/BIN_WALL/BIN_H."""
+    seg = 20
+    outside = lathe("BinOutside", [(0.34, 0.06), (0.36, 0.85)], seg=seg, material=M["bin"],
+                    cap_bottom=True, cap_top=False)
+    # the inside wall and floor, dark so the opening reads as a hole from the chase camera
+    inside = lathe("BinInside", [(0.30, 0.85), (0.30, 0.09)], seg=seg, material=M["bin_in"],
+                   cap_bottom=False, cap_top=True)
+    for p in inside.data.polygons:
+        p.flip()                                   # faces point inwards, towards the viewer
+    rim = lathe("BinRim", [(0.295, 0.85), (0.37, 0.85), (0.37, 0.88), (0.295, 0.88), (0.295, 0.85)], seg=seg,
+                material=M["pole"], cap_bottom=False, cap_top=False)   # a ring: capping would seal the bin
+    foot = lathe("BinFoot", [(0.0, 0.0), (0.3, 0.0), (0.3, 0.07), (0.0, 0.07)], seg=seg, material=M["wood_dark"])
+    band = lathe("BinBand", [(0.356, 0.55), (0.362, 0.55), (0.362, 0.66), (0.356, 0.66), (0.356, 0.55)], seg=seg,
+                 material=M["ring_white"], cap_bottom=False, cap_top=False)
+    pole = cyl("FlagPole", 0.025, 2.6, (0.0, 0.45, 0.0), M["pole"], seg=6)
+    bm = bmesh.new()
+    a = bm.verts.new((0.0, 0.45, 2.58)); b = bm.verts.new((0.7, 0.45, 2.33)); c = bm.verts.new((0.0, 0.45, 2.08))
+    bm.faces.new((a, b, c))
+    flag = obj_from_bm("Pennant", bm, M["ring_red"])
+    solid = flag.modifiers.new("Solid", "SOLIDIFY"); solid.thickness = 0.02
+    return join("Bin", [outside, inside, rim, foot, band, pole, flag])
+
+
+def build_rings():
+    """Painted target rings on the grass round the bin: red bullseye, then white, red, white."""
+    parts = []
+    radii = [(0.0, 0.7, "ring_red"), (0.7, 1.6, "ring_white"), (1.6, 2.6, "ring_red"), (2.6, 3.6, "ring_white")]
+    for i, (r0, r1, m) in enumerate(radii):
+        z = 0.012 + i * 0.002
+        prof = [(r0, z), (r1, z)] if r0 > 0 else [(0.0, z), (r1, z)]
+        parts.append(lathe("Ring", prof, seg=40, material=M[m], cap_bottom=False, cap_top=False))
+    o = join("TargetRings", parts)
+    for p in o.data.polygons:
+        if p.normal.z < 0:
+            p.flip()
+    return o
+
+
 # ---------------------------------------------------------------- run
 def main():
     reset()
@@ -315,7 +360,7 @@ def main():
     for name, fn in (("bottle", build_bottle), ("cap", build_cap), ("table", build_table),
                      ("tree_round", lambda: build_tree("round")), ("tree_pine", lambda: build_tree("pine")),
                      ("bush", build_bush), ("cloud", build_cloud), ("sign", build_sign),
-                     ("flag", build_flag), ("fence", build_fence), ("rock", build_rock)):
+                     ("flag", build_flag), ("fence", build_fence), ("rock", build_rock), ("bin", build_bin), ("rings", build_rings)):
         o = fn()
         made[name] = o
         export(name, [o])
