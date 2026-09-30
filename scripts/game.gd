@@ -884,8 +884,10 @@ func _refresh_title() -> void:
 		lbl_best.text = "NO %s GAMES YET" % game_type.to_upper() if game_type == "target" else "NO THROWS YET"
 	else:
 		lbl_best.text = "BEST  %s" % _units(b.total)
-	lbl_drink.text = drink.name
-	lbl_trait.text = drink.trait
+	# the room between the two arrows: 720 wide, less the screen and card margins and the arrows
+	var room := 720.0 - 2 * 44 - 2 * 36 - 2 * 104 - 2 * 10 - 12
+	UiTheme.fit(lbl_drink, drink.name, room, 50, 26)
+	UiTheme.fit(lbl_trait, drink.trait, room, 28, 18)
 	for k in btn_types:
 		_paint(btn_types[k], UiTheme.YELLOW if k == game_type else UiTheme.CREAM)
 	btn_own_page.visible = Motion.needs_own_page()

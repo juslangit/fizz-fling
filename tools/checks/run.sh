@@ -10,6 +10,8 @@ echo "== physics"
 perl -e 'alarm 90; exec @ARGV' "$GODOT" --headless --path . -s tools/checks/physics_check.gd 2>&1 | grep -E "^(PASS|FAIL)|failed" || fail=1
 echo "== models"
 perl -e 'alarm 90; exec @ARGV' "$GODOT" --headless --path . -s tools/checks/models_check.gd 2>&1 | grep -E "^(PASS|FAIL)|failed" || fail=1
+echo "== layout"
+perl -e 'alarm 90; exec @ARGV' "$GODOT" --headless --path . tools/checks/layout_check.tscn 2>&1 | grep -E "^(PASS|FAIL)|failed" || fail=1
 for mode in "--demo" "--demo --party" "--demo --target" "--demo --party --target"; do
   echo "== game plays itself ($mode)"
   out=$(perl -e 'alarm 120; exec @ARGV' "$GODOT" --headless --path . --quit-after 7000 -- $mode 2>&1)
