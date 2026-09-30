@@ -1,0 +1,62 @@
+<!-- Injected into the web page's <head> by tools/build_web.sh (Godot: html/head_include). -->
+<style>
+html,body,canvas{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:none;overscroll-behavior:none}
+#status{background:radial-gradient(circle at 50% 35%,#ffd76a 0,#ff8a1f 45%,#e3262c 100%) !important}
+#status-progress{bottom:12% !important;width:66% !important;height:28px;-webkit-appearance:none;appearance:none;border:5px solid #5a0d16;border-radius:18px;background:#fff6e6;overflow:hidden}
+#status-progress::-webkit-progress-bar{background:#fff6e6;border-radius:14px}
+#status-progress::-webkit-progress-value{background:linear-gradient(90deg,#ffc428,#ff8a1f);border-radius:14px}
+#status-progress::-moz-progress-bar{background:linear-gradient(90deg,#ffc428,#ff8a1f)}
+#status::before{content:'FIZZ FLING';position:absolute;top:34%;left:0;right:0;text-align:center;color:#ffc428;font:900 64px/1 'Arial Rounded MT Bold','Trebuchet MS',sans-serif;text-shadow:0 5px 0 #5a0d16,0 0 3px #5a0d16}
+#status::after{content:'Shaking things up...';position:absolute;bottom:calc(12% + 46px);left:0;right:0;text-align:center;color:#fff;font:700 22px/1.2 'Trebuchet MS',sans-serif;text-shadow:0 2px 0 #5a0d16}
+</style>
+<script>
+/* iOS Safari starts web audio suspended; resume every audio context on the first touches. */
+(function(){var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;var list=[];var Orig=AC;
+var W=function(o){var c=o?new Orig(o):new Orig();list.push(c);return c;};W.prototype=Orig.prototype;
+window.AudioContext=W;window.webkitAudioContext=W;
+var unlock=function(){try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}
+list.forEach(function(c){if(c.state!=='running')c.resume();try{var b=c.createBuffer(1,1,22050);var n=c.createBufferSource();n.buffer=b;n.connect(c.destination);n.start(0);}catch(e){}});};
+['touchend','click','keydown'].forEach(function(t){document.addEventListener(t,unlock,true);});})();
+
+/* window.fizz: what the motion sensors say, read by scripts/motion.gd every frame.
+   shake  energy since Godot last emptied it: sum of (linear acceleration - 3 m/s²) x seconds
+   ux,uy  which way is up, in screen coordinates (x right, y up), for tilting to aim
+   has    true once real sensor data has arrived
+   perm   'unknown' | 'asking' | 'granted' | 'denied' | 'error' | 'none'
+   goto   set by the game while the PLAY FULL SCREEN button is held; the tap that
+          follows reopens the game on its own page (iPhone gives no motion inside itch's frame) */
+window.fizz={shake:0,live:0,ux:0,uy:1,has:false,perm:'unknown',events:0,goto:'',listening:false,
+ touch:(('ontouchstart' in window)||navigator.maxTouchPoints>0||location.search.indexOf('forcetouch')>=0),
+ frame:(window.top!==window),
+ ios:(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||location.search.indexOf('forceios')>=0)};
+(function(){
+var F=window.fizz,gx=0,gy=0,gz=0,seeded=false;
+function motion(e){
+ F.events++;
+ var g=e.accelerationIncludingGravity;if(!g||g.x===null||g.x===undefined)return;
+ var k=F.ios?-1:1,x=k*g.x,y=k*g.y,z=k*g.z;           /* iOS reports the opposite sign to Android */
+ var dt=e.interval||0.016;if(dt>1)dt/=1000;if(dt>0.1)dt=0.1;  /* Chrome gives ms, Safari seconds */
+ if(!seeded){gx=x;gy=y;gz=z;seeded=true;}
+ var a=Math.min(1,dt*6);gx+=(x-gx)*a;gy+=(y-gy)*a;gz+=(z-gz)*a;  /* slow average = gravity */
+ var lin=e.acceleration,m;
+ if(lin&&lin.x!==null&&lin.x!==undefined){m=Math.sqrt(lin.x*lin.x+lin.y*lin.y+lin.z*lin.z);}
+ else{var dx=x-gx,dy=y-gy,dz=z-gz;m=Math.sqrt(dx*dx+dy*dy+dz*dz);}
+ F.shake+=Math.max(0,m-3)*dt;F.live=m;
+ var l=Math.sqrt(gx*gx+gy*gy+gz*gz);if(l>1){F.ux=gx/l;F.uy=gy/l;}
+ F.has=true;
+}
+function listen(){if(!F.listening){F.listening=true;window.addEventListener('devicemotion',motion);}}
+function ask(){
+ if(F.has||F.perm==='asking'||F.perm==='granted'||F.perm==='denied')return;
+ var M=window.DeviceMotionEvent;
+ if(M&&typeof M.requestPermission==='function'){F.perm='asking';
+  M.requestPermission().then(function(r){F.perm=r;if(r==='granted')listen();}).catch(function(){F.perm='error';});}
+ else if(M){F.perm='granted';listen();}else{F.perm='none';}
+}
+if(!(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function')){
+ if(window.DeviceMotionEvent){F.perm='granted';listen();}else{F.perm='none';}}
+function go(){if(!F.goto)return;F.goto='';var u=location.href;try{window.top.location.href=u;}catch(e){window.open(u,'_blank');}}
+['touchend','click'].forEach(function(t){document.addEventListener(t,go,true);document.addEventListener(t,ask,true);});
+document.addEventListener('contextmenu',function(e){e.preventDefault();});
+})();
+</script>

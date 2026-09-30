@@ -1,0 +1,8 @@
+.godot/
+build/
+.env
+*.env
+docs/index.html
+art/audio-src/
+assets/texturelabs/
+.DS_Store
