@@ -191,7 +191,7 @@ func _process(delta: float) -> void:
 		S.TITLE:
 			_orbit += delta * 0.18
 			# close round the bottle, so the drink picker's change shows on the table
-			_cam(Vector3(sin(_orbit) * 1.5 - 0.2, 1.3, cos(_orbit) * 1.5 + 0.2), Vector3(0.05, 0.84, 0), 2.0, delta)
+			_cam(Vector3(sin(_orbit) * 1.5 - 0.2, 1.3, cos(_orbit) * 1.5 + 0.2), Vector3(0.05, 0.74, 0), 2.0, delta)
 			if Motion.auto_nav and t > 1.2:
 				if Motion.demo_party:
 					_go(S.SETUP)
