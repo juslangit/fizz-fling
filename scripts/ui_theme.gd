@@ -97,6 +97,9 @@ static func label(text: String, size := BODY, col := WHITE, outline := OUTLINE) 
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", col)
 	l.add_theme_constant_override("outline_size", outline)
+	if outline == 0:
+		# dark text on the cream cards: no drop shadow, which doubled small type (a hyphen read as "=")
+		l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return l
