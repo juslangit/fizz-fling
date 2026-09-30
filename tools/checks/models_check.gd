@@ -13,7 +13,7 @@ func check(name: String, ok: bool, detail := "") -> void:
 
 
 func _init() -> void:
-	for n in ["sign", "fence", "tree_round", "tree_pine", "bush", "rock", "table", "flag"]:
+	for n in ["sign", "fence", "tree_round", "tree_pine", "bush", "rock", "table", "flag", "bin", "rings"]:
 		var scene: Node = load("res://assets/models/%s.glb" % n).instantiate()
 		var mi: MeshInstance3D = scene.find_children("*", "MeshInstance3D", true, false)[0]
 		var box: AABB = mi.mesh.get_aabb()
@@ -24,6 +24,12 @@ func _init() -> void:
 	var sb: AABB = (sign.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D).mesh.get_aabb()
 	check("the sign board is where world.gd writes the number (1.47 m)", sb.position.y + sb.size.y > 1.6 and sb.position.y + sb.size.y < 2.0)
 	sign.free()
+	var bin: Node = load("res://assets/models/bin.glb").instantiate()
+	var bb: AABB = (bin.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D).mesh.get_aabb()
+	check("the bin's rim is where the physics puts it (Flight.BIN_H)", absf(bb.position.y) < 0.01 and bb.size.y > 2.0)
+	bin.free()
+	for d in load("res://scripts/drinks.gd").LIST:
+		check("the %s label exists" % d.id, ResourceLoader.exists(d.label))
 	var b: Node = load("res://assets/models/bottle.glb").instantiate()
 	check("the bottle has its soda inside, to drain", b.find_child("Liquid", true, false) != null)
 	b.free()

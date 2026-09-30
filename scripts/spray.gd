@@ -28,6 +28,9 @@ var _mouth_fn: Callable
 var _accum := 0.0
 var _rng := RandomNumberGenerator.new()
 var _splash_cool := 0.0
+var _drop_a := Color(0.95, 0.32, 0.02)
+var _drop_b := Color(1.0, 0.5, 0.1)
+var _splat_c := Color(1.0, 0.62, 0.25)
 
 
 func _ready() -> void:
@@ -99,15 +102,19 @@ func clear() -> void:
 		_splats.set_instance_transform(i, hidden)
 
 
-## Starts the jet. `mouth_fn` returns the bottle mouth each frame (the bottle recoils).
-func start(mouth_fn: Callable, elev: float, pressure: float, wind: float, seed_value: int) -> void:
+## Starts the jet. `mouth_fn` returns the bottle mouth each frame (the bottle recoils);
+## `drink` (scripts/drinks.gd) sets the colours and how fast and long it sprays.
+func start(mouth_fn: Callable, elev: float, pressure: float, wind: float, seed_value: int, drink := {}) -> void:
 	clear()
 	_rng.seed = seed_value
 	_mouth_fn = mouth_fn
 	_elev = elev
 	_wind = wind
-	_speed = Flight.launch_speed(pressure) * Flight.SPRAY_SPEED
-	_dur = Flight.spray_duration(pressure)
+	_speed = Flight.launch_speed(pressure) * Flight.SPRAY_SPEED * drink.get("spray", 1.0)
+	_dur = Flight.spray_duration(pressure, drink.get("spray_time", 1.0))
+	_drop_a = drink.get("drop", _drop_a)
+	_drop_b = drink.get("drop2", _drop_b)
+	_splat_c = drink.get("splat", _splat_c)
 	_t = 0.0
 	_accum = 0.0
 	emitting = true
@@ -136,7 +143,7 @@ func _spawn(strength: float) -> void:
 	_size[i] = _rng.randf_range(0.6, 1.5)
 	_alive[i] = 1
 	var foam := _rng.randf() < 0.3
-	_drops.set_instance_color(i, Color(1.0, 0.95, 0.85) if foam else Color(0.95, 0.32, 0.02).lerp(Color(1.0, 0.5, 0.1), _rng.randf()))
+	_drops.set_instance_color(i, Color(1.0, 0.95, 0.85) if foam else _drop_a.lerp(_drop_b, _rng.randf()))
 
 
 func _physics_process(delta: float) -> void:
@@ -187,7 +194,7 @@ func _splat(p: Vector3, size: float) -> void:
 	var s := size * _rng.randf_range(0.7, 1.3)
 	var b := Basis(Vector3.UP, _rng.randf() * TAU).scaled(Vector3(s, 1.0, s * _rng.randf_range(0.6, 1.0)))
 	_splats.set_instance_transform(_splat_next % MAX_SPLATS, Transform3D(b, Vector3(p.x, y, p.z)))
-	_splats.set_instance_color(_splat_next % MAX_SPLATS, Color(1.0, 0.62, 0.25).lerp(Color(1.0, 0.9, 0.75), _rng.randf()))
+	_splats.set_instance_color(_splat_next % MAX_SPLATS, _splat_c.lerp(Color(1.0, 0.95, 0.88), _rng.randf() * 0.6))
 	_splat_next += 1
 	if _splash_cool <= 0.0:
 		_splash_cool = 0.25
