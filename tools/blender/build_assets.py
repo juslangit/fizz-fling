@@ -12,7 +12,7 @@ from mathutils import Vector
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__) if "__file__" in dir() else "", "..", ".."))
 if not os.path.isdir(os.path.join(ROOT, "assets")):
-    ROOT = os.path.expanduser("~/Desktop/project/game/fizz-fling")
+    ROOT = os.path.expanduser("~/Desktop/projects/game/fizz-fling")
 OUT = os.path.join(ROOT, "assets", "models")
 os.makedirs(OUT, exist_ok=True)
 random.seed(7)
